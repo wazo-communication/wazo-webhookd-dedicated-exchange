@@ -1,0 +1,3 @@
+bus:
+  exchange_name: wazo-webhookd
+  exchange_type: headers

@@ -1,0 +1,26 @@
+#!/bin/sh
+# Copyright 2024-2025 The Wazo Authors  (see the AUTHORS file)
+# SPDX-License-Identifier: GPL-3.0+
+
+case "$1" in
+    build)
+        ;;
+
+    package)
+        cp etc/wazo-webhookd/conf.d/50-dedicated-exchange.yml ${pkgdir}/etc/wazo-webhookd/conf.d/50-dedicated-exchange.yml
+        ;;
+
+    install)
+        systemctl restart wazo-webhookd.service
+        ;;
+
+    uninstall)
+	      rm -f /etc/wazo-webhookd/conf.d/50-dedicated-exchange.yml
+        systemctl restart wazo-webhookd.service
+        ;;
+
+    *)
+        echo "$0 called with unknown argument '$1'" >&2
+        exit 1
+    ;;
+esac
