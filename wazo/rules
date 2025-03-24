@@ -7,15 +7,22 @@ case "$1" in
         ;;
 
     package)
+        mkdir -p ${pkgdir}/etc/wazo-webhookd/conf.d/
         cp etc/wazo-webhookd/conf.d/50-dedicated-exchange.yml ${pkgdir}/etc/wazo-webhookd/conf.d/50-dedicated-exchange.yml
         ;;
 
     install)
+        rabbitmq-plugins enable rabbitmq_management
+        rabbitmqadmin --vhost "/" declare exchange name=wazo-webhookd type=headers durable=false
+        rabbitmqadmin declare binding source=wazo-headers destination_type=exchange destination=wazo-webhookd routing_key="" \
+            arguments="{\"name\": [\"user_voicemail_message_created\", \"call_push_notification\", \"call_cancel_push_notification\", \"chatd_user_room_message_created\", \"user_missed_call\"], \"x-match\": \"all\"}"
         systemctl restart wazo-webhookd.service
         ;;
 
     uninstall)
-	      rm -f /etc/wazo-webhookd/conf.d/50-dedicated-exchange.yml
+        rabbitmqadmin --vhost "/" delete exchange name=wazo-webhookd
+        rabbitmq-plugins disable rabbitmq_management
+        rm -f /etc/wazo-webhookd/conf.d/50-dedicated-exchange.yml
         systemctl restart wazo-webhookd.service
         ;;
 
