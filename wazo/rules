@@ -9,19 +9,22 @@ case "$1" in
     package)
         mkdir -p ${pkgdir}/etc/wazo-webhookd/conf.d/
         cp etc/wazo-webhookd/conf.d/50-dedicated-exchange.yml ${pkgdir}/etc/wazo-webhookd/conf.d/50-dedicated-exchange.yml
+	mkdir -p ${pkgdir}/etc/systemd/system/wazo-webhookd.service.d
+        cp etc/systemd/system/wazo-webhookd.service.d/create-dedicated-exchange.conf ${pkgdir}/etc/systemd/system/wazo-webhookd.service.d/create-dedicate-exchange.conf
+	mkdir -p ${pkgdir}/usr/bin
+        cp create-exchange-webhookd.py ${pkgdir}/usr/bin/wazo-webhookd-dedicated-exchange-create
+        cp delete-exchange-webhookd.py ${pkgdir}/usr/bin/wazo-webhookd-dedicated-exchange-delete
         ;;
 
     install)
-        rabbitmq-plugins enable rabbitmq_management
-        rabbitmqadmin --vhost "/" declare exchange name=wazo-webhookd type=headers durable=true
-        rabbitmqadmin declare binding source=wazo-headers destination_type=exchange destination=wazo-webhookd routing_key="" \
-            arguments="{\"name\": [\"user_voicemail_message_created\", \"call_push_notification\", \"call_cancel_push_notification\", \"chatd_user_room_message_created\", \"user_missed_call\"], \"x-match\": \"all\"}"
+	systemctl daemon-reload
         systemctl restart wazo-webhookd.service
         ;;
 
     uninstall)
-        rabbitmqadmin --vhost "/" delete exchange name=wazo-webhookd
-        rabbitmq-plugins disable rabbitmq_management
+	/usr/bin/wazo-webhookd-dedicated-exchange-delete
+	rm -f /etc/systemd/system/wazo-webhookd.service.d/create-dedicated-exchange.conf
+	systemctl daemon-reload
         rm -f /etc/wazo-webhookd/conf.d/50-dedicated-exchange.yml
         systemctl restart wazo-webhookd.service
         ;;
